@@ -1,11 +1,7 @@
-﻿using Modul_3_Practice_4.Model;
-using Modul_3_Practice_4.Services.Abstract;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Modul_3_Practice_4.Model;
+using Modul_3_Practice_4.Services.Abstract;
 
 namespace Modul_3_Practice_4.Services
 {
@@ -14,6 +10,7 @@ namespace Modul_3_Practice_4.Services
         private readonly string _fileToCopy;
         private readonly string _backupDirectory;
         private readonly string _nameTemplate;
+
         public BackupManager(Config config)
         {
             _fileToCopy = config.LogFilePath;
@@ -27,6 +24,7 @@ namespace Modul_3_Practice_4.Services
             {
                 Directory.CreateDirectory(_backupDirectory);
             }
+
             var backupFile = $@"{_backupDirectory}\{DateTime.Now.ToString(_nameTemplate)}.txt";
             File.Copy(_fileToCopy, backupFile);
         }

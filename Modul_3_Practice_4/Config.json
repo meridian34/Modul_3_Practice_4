@@ -1,6 +1,6 @@
 ﻿{
   "logFilePath": "test.txt",
   "numberDelimeterForBackup": 150,
-  "backupDirectory": "..\\Backup",
+  "backupDirectory": "Backup",
   "backupNameTemplate": "yyyyMMddHHmmssffff"
 }

@@ -1,16 +1,13 @@
-﻿using Modul_3_Practice_4.Services;
-using Modul_3_Practice_4.Services.Abstract;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System;
 using System.Threading.Tasks;
+using Modul_3_Practice_4.Services;
 
 namespace Modul_3_Practice_4.Helpers
 {
-    class Starter
+    public class Starter
     {
         private readonly BackupManager _backupManager;
+
         public Starter()
         {
             var c = new ConfigService();
@@ -23,26 +20,25 @@ namespace Modul_3_Practice_4.Helpers
             var l = await LogToFileService.Instance;
             l.BackupHandler += MakeBackup;
 
-            if (l != null)
+            var t1 = Task.Run(async () =>
             {
-                Task.Run(() =>
+                for (int i = 0; i < 2000; i++)
                 {
-                    for (int i = 0; i < 2000; i++)
-                    {
-                        l.LogInfoAsync(i.ToString());
-                    }
-                });
+                    await l.LogInfoAsync(i.ToString());
+                }
+            });
 
-                Task.Run(() =>
+            var t2 = Task.Run(async () =>
+            {
+                for (int i = 3000; i < 5000; i++)
                 {
-                    for (int i = 3000; i < 5000; i++)
-                    {
-                        l.LogInfoAsync(i.ToString());
-                    }
-                });
+                    await l.LogInfoAsync(i.ToString());
+                }
+            });
 
-            }
+            await Task.WhenAll(t1, t2);
         }
+
         public void MakeBackup()
         {
             _backupManager.MakeBackup();

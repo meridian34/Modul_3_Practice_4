@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Modul_3_Practice_4.Model;
@@ -19,31 +16,21 @@ namespace Modul_3_Practice_4.Services
         private readonly StreamWriter _stream;
         private readonly int _numberDelimeterForBackup;
         private int _indexerForBackup;
-        public event Action BackupHandler;
-
-        private LogToFileService(Config config)
-        {
-            _slim = new SemaphoreSlim(1);
-            _fileService = new FileService();
-            _stream = _fileService.CreateStreamForWrite(config.LogFilePath);
-            _numberDelimeterForBackup = config.NumberDelimeterForBackup;           
-        }
 
         static LogToFileService()
         {
             _instance = CreateService();
         }
 
-        private static async Task<LogToFileService> CreateService()
+        private LogToFileService(Config config)
         {
-            
-            var log = await Task.Run(() =>
-            {
-                var c = new ConfigService();
-                return new LogToFileService(c.GetConfig());
-            });
-            return log;
+            _slim = new SemaphoreSlim(1);
+            _fileService = new FileService();
+            _stream = _fileService.CreateStreamForWrite(config.LogFilePath);
+            _numberDelimeterForBackup = config.NumberDelimeterForBackup;
         }
+
+        public event Action BackupHandler;
 
         public static Task<LogToFileService> Instance
         {
@@ -55,12 +42,12 @@ namespace Modul_3_Practice_4.Services
             await _slim.WaitAsync();
             _indexerForBackup++;
             await _fileService.WriteAsync(_stream, $"{DateTime.UtcNow}: {logType}: {message}");
-            if(_indexerForBackup%_numberDelimeterForBackup == 0 && BackupHandler != null)
+            if (_indexerForBackup % _numberDelimeterForBackup == 0 && BackupHandler != null)
             {
                 await _fileService.WriteAsync(_stream, $"Start Backup");
                 BackupHandler.Invoke();
             }
-            
+
             _slim.Release();
         }
 
@@ -77,6 +64,16 @@ namespace Modul_3_Practice_4.Services
         public async Task LogWarningAsync(string message)
         {
             await LogAsync(LogType.Warning, message);
+        }
+
+        private static async Task<LogToFileService> CreateService()
+        {
+            var log = await Task.Run(() =>
+            {
+                var c = new ConfigService();
+                return new LogToFileService(c.GetConfig());
+            });
+            return log;
         }
     }
 }

@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
+﻿using System.IO;
 using System.Threading.Tasks;
 
 namespace Modul_3_Practice_4.Services.Abstract
@@ -10,6 +6,7 @@ namespace Modul_3_Practice_4.Services.Abstract
     public interface IFileService
     {
         public StreamWriter CreateStreamForWrite(string path);
-        public Task WriteAsync(StreamWriter stream, string text);       
+
+        public Task WriteAsync(StreamWriter stream, string text);
     }
 }
