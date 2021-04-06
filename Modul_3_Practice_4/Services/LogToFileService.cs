@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
+using Modul_3_Practice_4.Model;
 using Modul_3_Practice_4.Model.Enum;
 using Modul_3_Practice_4.Services.Abstract;
 
@@ -10,41 +13,70 @@ namespace Modul_3_Practice_4.Services
 {
     public class LogToFileService : ILoggerService
     {
-        private static readonly Lazy<LogToFileService> _instance;
-        private LogToFileService()
+        private static readonly Task<LogToFileService> _instance;
+        private readonly IFileService _fileService;
+        private readonly SemaphoreSlim _slim;
+        private readonly StreamWriter _stream;
+        private readonly int _numberDelimeterForBackup;
+        private int _indexerForBackup;
+        public event Action BackupHandler;
+
+        private LogToFileService(Config config)
         {
+            _slim = new SemaphoreSlim(1);
+            _fileService = new FileService();
+            _stream = _fileService.CreateStreamForWrite(config.LogFilePath);
+            _numberDelimeterForBackup = config.NumberDelimeterForBackup;           
         }
 
         static LogToFileService()
         {
-            _instance = new Lazy<LogToFileService>(new LogToFileService());
+            _instance = CreateService();
         }
 
-        public LogToFileService Instance
+        private static async Task<LogToFileService> CreateService()
         {
-            get { return _instance.Value; }
+            
+            var log = await Task.Run(() =>
+            {
+                var c = new ConfigService();
+                return new LogToFileService(c.GetConfig());
+            });
+            return log;
         }
 
-
-        public void Log(LogType logType, string message)
+        public static Task<LogToFileService> Instance
         {
-            var logMessage = $"{DateTime.UtcNow}: {logType}: {message}";
-            _fileService.Write(logMessage, _logConfig);
+            get { return _instance; }
         }
 
-        public void LogError(string message)
+        public async Task LogAsync(LogType logType, string message)
         {
-            Log(LogType.Error, message);
+            await _slim.WaitAsync();
+            _indexerForBackup++;
+            await _fileService.WriteAsync(_stream, $"{DateTime.UtcNow}: {logType}: {message}");
+            if(_indexerForBackup%_numberDelimeterForBackup == 0 && BackupHandler != null)
+            {
+                await _fileService.WriteAsync(_stream, $"Start Backup");
+                BackupHandler.Invoke();
+            }
+            
+            _slim.Release();
         }
 
-        public void LogInfo(string message)
+        public async Task LogErrorAsync(string message)
         {
-            Log(LogType.Info, message);
+            await LogAsync(LogType.Error, message);
         }
 
-        public void LogWarning(string message)
+        public async Task LogInfoAsync(string message)
         {
-            Log(LogType.Warning, message);
+            await LogAsync(LogType.Info, message);
+        }
+
+        public async Task LogWarningAsync(string message)
+        {
+            await LogAsync(LogType.Warning, message);
         }
     }
 }

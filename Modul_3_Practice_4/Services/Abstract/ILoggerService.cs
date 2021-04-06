@@ -9,9 +9,10 @@ namespace Modul_3_Practice_4.Services.Abstract
 {
     public interface ILoggerService
     {
-        public void Log(LogType logType, string message);
-        public void LogInfo(string message);
-        public void LogWarning(string message);
-        public void LogError(string message);
+        public event Action BackupHandler;
+        public Task LogAsync(LogType logType, string message);
+        public Task LogInfoAsync(string message);
+        public Task LogWarningAsync(string message);
+        public Task LogErrorAsync(string message);
     }
 }
